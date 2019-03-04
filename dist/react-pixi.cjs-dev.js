@@ -15029,6 +15029,25 @@ var performanceNow$1 = createCommonjsModule(function (module) {
  *   https://github.com/facebook/react/blob/master/packages/react-reconciler/src/forks/ReactFiberHostConfig.custom.js
  * -------------------------------------------
  */
+var EMPTY_OBJECT = {};
+
+function shouldDeprioritize(type, props) {
+  var isAlphaVisible = function isAlphaVisible() {
+    return !props.alpha || props.alpha > 0;
+  };
+
+  var isRenderable = function isRenderable() {
+    return props.renderable === true;
+  };
+
+  var isVisible = function isVisible() {
+    return props.visible === true;
+  };
+
+  return [isAlphaVisible, isRenderable, isVisible].some(function (isVisible) {
+    return !isVisible();
+  });
+}
 
 function appendChild(parent, child) {
   if (parent.addChild) {
@@ -15054,49 +15073,6 @@ function insertBefore(parent, child, beforeChild) {
   var childExists = parent.children.indexOf(child) !== -1;
   var index = parent.getChildIndex(beforeChild);
   childExists ? parent.setChildIndex(child, index) : parent.addChildAt(child, index);
-} // get diff between 2 objects
-// https://github.com/facebook/react/blob/97e2911/packages/react-dom/src/client/ReactDOMFiberComponent.js#L546
-
-
-function diffProperties(pixiElement, type, lastProps, nextProps, rootContainerElement) {
-  var updatePayload = null;
-
-  for (var propKey in lastProps) {
-    if (nextProps.hasOwnProperty(propKey) || !lastProps.hasOwnProperty(propKey) || lastProps[propKey] == null) {
-      continue;
-    }
-
-    if (propKey === CHILDREN) ; else {
-      // For all other deleted properties we add it to the queue. We use
-      // the whitelist in the commit phase instead.
-      if (!updatePayload) {
-        updatePayload = [];
-      }
-
-      updatePayload.push(propKey, null);
-    }
-  }
-
-  for (var _propKey in nextProps) {
-    var nextProp = nextProps[_propKey];
-    var lastProp = lastProps != null ? lastProps[_propKey] : undefined;
-
-    if (!nextProps.hasOwnProperty(_propKey) || nextProp === lastProp || nextProp == null && lastProp == null) {
-      continue;
-    }
-
-    if (_propKey === CHILDREN) ; else {
-      // For any other property we always add it to the queue and then we
-      // filter it out using the whitelist during the commit.
-      if (!updatePayload) {
-        updatePayload = [];
-      }
-
-      updatePayload.push(_propKey, nextProp);
-    }
-  }
-
-  return updatePayload;
 }
 
 var hostconfig = {
@@ -15104,7 +15080,7 @@ var hostconfig = {
     return rootContainerInstance;
   },
   getChildHostContext: function getChildHostContext() {
-    return {};
+    return EMPTY_OBJECT;
   },
   getPublicInstance: function getPublicInstance(instance) {
     return instance;
@@ -15119,18 +15095,13 @@ var hostconfig = {
     return false;
   },
   prepareUpdate: function prepareUpdate(pixiElement, type, oldProps, newProps, rootContainerInstance, hostContext) {
-    console.log('prepareUpdate');
     return true;
-    return diffProperties(pixiElement, type, oldProps, newProps, rootContainerInstance);
   },
   shouldSetTextContent: function shouldSetTextContent(type, props) {
     return false;
   },
   shouldDeprioritizeSubtree: function shouldDeprioritizeSubtree(type, props) {
-    var isAlphaVisible = typeof props.alpha === 'undefined' || props.alpha > 0;
-    var isRenderable = typeof props.renderable === 'undefined' || props.renderable === true;
-    var isVisible = typeof props.visible === 'undefined' || props.visible === true;
-    return !(isAlphaVisible && isRenderable && isVisible);
+    return shouldDeprioritize(type, props);
   },
   createTextInstance: function createTextInstance(text, rootContainerInstance, internalInstanceHandler) {
     invariant_1(false, 'PixiFiber does not support text instances. Use `<Text /> component` instead.');
@@ -15151,12 +15122,7 @@ var hostconfig = {
   insertBefore: insertBefore,
   insertInContainerBefore: insertBefore,
   commitUpdate: function commitUpdate(instance, updatePayload, type, oldProps, newProps) {
-    var applyProps = instance && instance.applyProps;
-
-    if (typeof applyProps !== 'function') {
-      applyProps = applyDefaultProps;
-    }
-
+    var applyProps = instance && instance.applyProps || applyDefaultProps;
     applyProps(instance, oldProps, newProps);
   },
   commitMount: function commitMount(instance, updatePayload, type, oldProps, newProps) {// noop
@@ -15164,7 +15130,9 @@ var hostconfig = {
   commitTextUpdate: function commitTextUpdate(textInstance, oldText, newText) {// noop
   },
   resetTextContent: function resetTextContent(pixiElement) {// noop
-  }
+  },
+  scheduleAnimationCallback: window.requestAnimationFrame,
+  scheduleDeferredCallback: window.requestIdleCallback
 };
 
 var PixiFiber = reactReconciler(hostconfig);
