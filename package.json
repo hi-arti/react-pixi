@@ -19,7 +19,7 @@
     "build": "rimraf ./dist && npm run build:dev && npm run build:prod",
     "test": "jest --silent",
     "test:watch": "jest --silent --watch",
-    "prepublish": "if-env CI=true && echo \"skip build\" || (npm run test && npm run eslint && npm run build)"
+    "prepublish": "if-env CI=true && echo \"skip build\" || (npm run build)"
   },
   "files": [
     "dist/",
@@ -88,14 +88,14 @@
   },
   "peerDependencies": {
     "pixi.js": "^4.7.1",
-    "prop-types": "^15.6.1",
-    "react": "^16.7.0-alpha.2",
-    "react-dom": "^16.7.0-alpha.2"
+    "prop-types": "^15.7.2",
+    "react": "^16.8.3",
+    "react-dom": "^16.8.3"
   },
   "dependencies": {
     "fbjs": "^1.0.0",
     "performance-now": "^2.1.0",
-    "react-reconciler": "^0.18.0-alpha.2"
+    "react-reconciler": "0.20.1"
   },
   "jest": {
     "collectCoverage": false,

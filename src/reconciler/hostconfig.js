@@ -114,6 +114,8 @@ export default {
   },
 
   prepareUpdate(pixiElement, type, oldProps, newProps, rootContainerInstance, hostContext) {
+    console.log('prepareUpdate')
+    return true
     return diffProperties(pixiElement, type, oldProps, newProps, rootContainerInstance)
   },
 
